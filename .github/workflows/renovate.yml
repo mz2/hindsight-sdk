@@ -2,15 +2,29 @@ name: Renovate
 
 on:
   schedule:
+    # Daily — Hindsight ships semver releases at a steady cadence, so one
+    # check a day is plenty to pick up new versions.
     - cron: "0 6 * * *"
   workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Renovate log level"
+        required: false
+        default: "info"
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   renovate:
-    uses: canonical/sdkcraft-actions/.github/workflows/renovate.yml@main
-    secrets:
-      RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: renovatebot/github-action@v41
+        with:
+          configurationFile: renovate.json
+          token: ${{ secrets.RENOVATE_TOKEN || secrets.GITHUB_TOKEN }}
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
