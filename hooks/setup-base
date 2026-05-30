@@ -3,7 +3,16 @@
 set -euo pipefail
 
 apt-get update
-eatmydata apt-get install python3-venv python3-pip nodejs npm curl ca-certificates
+eatmydata apt-get install python3-venv python3-pip curl ca-certificates gnupg
+
+# Node.js 20 LTS. The Hindsight web UI (control plane) is a Next.js 16 app that
+# requires Node >= 20; Ubuntu 24.04 ships Node 18. NodeSource publishes the LTS
+# for both amd64 and arm64, and bundles a matching npm.
+if ! command -v node >/dev/null 2>&1 \
+    || [ "$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)" -lt 20 ]; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    eatmydata apt-get install nodejs
+fi
 
 # Put the Hindsight venv (via the version-stable "current" symlink) and the
 # user-local bin directory on PATH for every login shell. $HOME and $PATH are
