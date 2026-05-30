@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["custom.regex"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^VERSION$/"],
+      "matchStrings": ["(?<currentValue>[0-9.]+)"],
+      "depNameTemplate": "hindsight-all",
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "baseBranchPatterns": ["latest"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["hindsight-all"],
+      "matchBaseBranches": ["latest"]
+    }
+  ]
+}

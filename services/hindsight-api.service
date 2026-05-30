@@ -1,0 +1,16 @@
+[Unit]
+Description=Hindsight memory API server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Optional provider/key/model config, persisted on the host via the
+# hindsight-data mount. The leading "-" means "do not fail if absent".
+EnvironmentFile=-%h/.hindsight/server.env
+ExecStart=%h/.local/share/hindsight/current/bin/hindsight-api --host 127.0.0.1 --port 8888
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

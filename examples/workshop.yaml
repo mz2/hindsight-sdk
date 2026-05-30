@@ -1,0 +1,29 @@
+# Reference workshop for the Hindsight SDK.
+#
+#   workshop launch
+#   workshop info        # API/Web UI URLs + health
+#   workshop shell       # then: hindsight-embed --help
+#
+# The hindsight-api (:8888) and hindsight-webui (:9999) tunnels auto-connect to
+# the host because their slots live on this SDK and the matching plugs are on
+# the system SDK below.
+name: hindsight-demo
+base: ubuntu@24.04
+sdks:
+  - name: hindsight
+    channel: latest/stable
+  - name: system
+    plugs:
+      hindsight-api:
+        interface: tunnel
+        endpoint: localhost:8888
+      hindsight-webui:
+        interface: tunnel
+        endpoint: localhost:9999
+    # Optional: expose a host LLM (e.g. Ollama on :11434) to the workshop so
+    # Hindsight runs keylessly. After `workshop refresh`, connect manually:
+    #   workshop connect hindsight-demo/hindsight:llm-endpoint hindsight-demo/system:llm-endpoint
+    slots:
+      llm-endpoint:
+        interface: tunnel
+        endpoint: localhost:11434

@@ -1,0 +1,14 @@
+[Unit]
+Description=Hindsight web UI (control plane)
+After=hindsight-api.service network-online.target
+Wants=hindsight-api.service network-online.target
+
+[Service]
+Type=simple
+Environment=PORT=9999
+ExecStart=%h/.local/bin/hindsight-webui
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,17 @@
+#!/usr/bin/bash
+# Runs as root after setup-project. Reports SDK health to Workshop.
+set -euo pipefail
+
+if ! sudo -u workshop --login hindsight-api --version >/dev/null 2>&1; then
+    workshopctl set-health error "hindsight-api is not installed; check the setup-project hook output"
+    exit 0
+fi
+
+# The API answers on :8888 once an LLM provider is configured and reachable.
+if curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:8888/ 2>/dev/null \
+    || curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:8888/docs 2>/dev/null; then
+    echo -n "Hindsight API -> http://localhost:8888  |  Web UI -> http://localhost:9999"
+    workshopctl set-health okay
+else
+    workshopctl set-health waiting "Hindsight API not responding on :8888 yet. If it does not come up, set an LLM provider in ~/.hindsight/server.env (HINDSIGHT_API_LLM_PROVIDER / HINDSIGHT_API_LLM_API_KEY) and run: workshop refresh"
+fi

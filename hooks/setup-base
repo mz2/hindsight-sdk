@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+# Runs as root on every launch and refresh. System-wide setup: toolchains and PATH.
+set -euo pipefail
+
+apt-get update
+eatmydata apt-get install python3-venv python3-pip nodejs npm curl ca-certificates
+
+# Put the Hindsight venv (via the version-stable "current" symlink) and the
+# user-local bin directory on PATH for every login shell. $HOME and $PATH are
+# resolved at login time, not now.
+cat <<EOF >/etc/profile.d/hindsight.sh
+export PATH="\$HOME/.local/share/hindsight/current/bin:\$HOME/.local/bin:\$PATH"
+EOF

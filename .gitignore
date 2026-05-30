@@ -1,0 +1,7 @@
+*.sdk
+.claude/
+.workshop.lock
+.workshop/
+parts/
+stage/
+prime/

@@ -1,0 +1,52 @@
+name: hindsight
+adopt-info: version
+summary: Hindsight agent-memory server, web UI, and client SDKs for Workshop
+description: |
+  This SDK runs Hindsight — an agent-memory system that retains, recalls, and
+  reflects on world facts, experiences, and mental models — inside a workshop.
+  It serves the Hindsight REST API and the web UI, and installs the Python and
+  Node client libraries for building against them. Memory data and the LLM
+  provider configuration are persisted on the host so they survive workshop
+  updates. The server reaches its LLM either through a cloud provider key
+  configured once in ~/.hindsight/server.env, or keylessly through a local
+  endpoint (Ollama/LM Studio) reached over the llm-endpoint tunnel.
+license: Apache-2.0
+
+platforms:
+  ubuntu@24.04:amd64:
+  ubuntu@24.04:arm64:
+
+plugs:
+  hindsight-data:
+    interface: mount
+    workshop-target: /home/workshop/.hindsight
+  pip-cache:
+    interface: mount
+    workshop-target: /home/workshop/.cache/pip
+  npm-cache:
+    interface: mount
+    workshop-target: /home/workshop/.npm
+  llm-endpoint:
+    interface: tunnel
+    endpoint: localhost:11434
+
+slots:
+  hindsight-api:
+    interface: tunnel
+    endpoint: localhost:8888
+  hindsight-webui:
+    interface: tunnel
+    endpoint: localhost:9999
+
+parts:
+  version:
+    plugin: nil
+    override-pull: |
+      VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
+      craftctl set version="$VERSION"
+    override-build: |
+      install -D -m644 "$CRAFT_PROJECT_DIR/VERSION" "$CRAFT_PART_INSTALL/VERSION"
+  services:
+    plugin: dump
+    source: services
+    source-type: local

@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+# Runs as the workshop user after interfaces are connected. Installs Hindsight
+# (server + clients) pinned to VERSION, seeds config, and starts the services.
+set -euo pipefail
+
+VERSION="$(cat "$SDK/VERSION")"
+SHARE="$HOME/.local/share/hindsight"
+VENV="$SHARE/venv-$VERSION"
+BIN="$HOME/.local/bin"
+
+mkdir -p "$SHARE" "$BIN" "$HOME/.hindsight" "$HOME/.cache/pip"
+
+# --- Python: Hindsight server + Python client, pinned to this release ---------
+if [ ! -x "$VENV/bin/hindsight-api" ]; then
+    python3 -m venv "$VENV"
+    "$VENV/bin/pip" install --upgrade pip
+    "$VENV/bin/pip" install "hindsight-all==$VERSION" "hindsight-client==$VERSION"
+fi
+ln -sfn "$VENV" "$SHARE/current"
+
+# --- Node: web UI control plane + Node client, pinned to this release ---------
+# Install into a user-writable prefix so binaries land in ~/.local/bin (on PATH).
+npm config set prefix "$HOME/.local"
+if [ "$(cat "$SHARE/.node-version" 2>/dev/null || true)" != "$VERSION" ]; then
+    if npm install -g \
+        "@vectorize-io/hindsight-control-plane@$VERSION" \
+        "@vectorize-io/hindsight-client@$VERSION"; then
+        echo "$VERSION" >"$SHARE/.node-version"
+    fi
+fi
+
+# Launcher for the web UI, pinning the control-plane version.
+cat >"$BIN/hindsight-webui" <<EOF
+#!/usr/bin/bash
+exec npx --yes "@vectorize-io/hindsight-control-plane@$VERSION" \\
+    --api-url "http://127.0.0.1:8888" --port 9999 "\$@"
+EOF
+chmod +x "$BIN/hindsight-webui"
+
+# --- Seed an editable, host-persisted provider config (no secrets shipped) ----
+if [ ! -f "$HOME/.hindsight/server.env" ]; then
+    cat >"$HOME/.hindsight/server.env" <<'EOF'
+# Hindsight LLM provider configuration. This file lives on the hindsight-data
+# mount, so it persists across workshop updates — configure it once.
+#
+# Cloud provider (set a real key, then `workshop refresh`):
+#   HINDSIGHT_API_LLM_PROVIDER=openai
+#   HINDSIGHT_API_LLM_API_KEY=sk-...
+#   HINDSIGHT_API_LLM_MODEL=gpt-4o-mini
+#
+# Keyless local provider via the `llm-endpoint` tunnel (e.g. host Ollama):
+#   HINDSIGHT_API_LLM_PROVIDER=ollama
+#   HINDSIGHT_API_LLM_BASE_URL=http://127.0.0.1:11434/v1
+#   HINDSIGHT_API_LLM_MODEL=llama3.1
+EOF
+fi
+
+# --- systemd user services ----------------------------------------------------
+install -D --mode=644 --target-directory "$HOME/.config/systemd/user" \
+    "$SDK/hindsight-api.service" "$SDK/hindsight-webui.service"
+systemctl --user daemon-reload
+systemctl --user enable --now hindsight-api.service hindsight-webui.service
