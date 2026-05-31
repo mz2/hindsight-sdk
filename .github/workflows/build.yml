@@ -9,6 +9,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
+# Build on GitHub-hosted runners via the shared sdkcraft-actions reusable
+# workflow. On amd64 it also runs `sdkcraft test` (the spread suite under
+# tests/) — the vm:true spread backend needs KVM, which the hosted amd64
+# runner provides. arm64 hosted runners are build-only for now (KVM there is
+# not guaranteed); flip run-tests: true once confirmed.
 jobs:
-  build:
+  amd64:
     uses: canonical/sdkcraft-actions/.github/workflows/build.yml@main
+    with:
+      runs-on: '["ubuntu-latest"]'
+      run-tests: true
+  arm64:
+    uses: canonical/sdkcraft-actions/.github/workflows/build.yml@main
+    with:
+      runs-on: '["ubuntu-24.04-arm"]'
+      run-tests: false
