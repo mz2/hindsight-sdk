@@ -1,0 +1,27 @@
+summary: check-health fails explicitly when no model is configured
+
+# server.env is seeded with HINDSIGHT_API_LLM_MODEL empty, so a fresh launch
+# must report an SDK health error (naming the missing model) rather than a
+# silent "okay". Setting the model and refreshing must clear that error.
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # No model set -> health error mentioning the missing model config.
+  workshop info test-hindsight | MATCH "HINDSIGHT_API_LLM_MODEL"
+
+  # Set a model and refresh.
+  workshop exec test-hindsight -- sed -i 's/^HINDSIGHT_API_LLM_MODEL=.*/HINDSIGHT_API_LLM_MODEL=qwen3.6:35b/' ~/.hindsight/server.env
+  workshop refresh
+
+  # The "model not set" error must be gone now.
+  workshop info test-hindsight | NOMATCH "HINDSIGHT_API_LLM_MODEL is not set"
+
+debug: |
+  workshop tasks
+  workshop info test-hindsight || true
