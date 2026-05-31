@@ -43,15 +43,19 @@ if [ ! -f "$HOME/.hindsight/server.env" ]; then
 # Hindsight LLM provider configuration. This file lives on the hindsight-data
 # mount, so it persists across workshop updates — configure it once.
 #
-# Cloud provider (set a real key, then `workshop refresh`):
+# Defaults to a keyless local provider reached via the `llm-endpoint` tunnel
+# (e.g. a host Ollama). You MUST set HINDSIGHT_API_LLM_MODEL to a model that
+# exists on that endpoint, then run `workshop refresh`. No model is defaulted
+# here on purpose — until you set one, check-health fails so the missing
+# config is explicit rather than silently wrong.
+HINDSIGHT_API_LLM_PROVIDER=ollama
+HINDSIGHT_API_LLM_BASE_URL=http://127.0.0.1:11434/v1
+HINDSIGHT_API_LLM_MODEL=
+
+# Or use a cloud provider instead (set a real key, then `workshop refresh`):
 #   HINDSIGHT_API_LLM_PROVIDER=openai
 #   HINDSIGHT_API_LLM_API_KEY=sk-...
 #   HINDSIGHT_API_LLM_MODEL=gpt-4o-mini
-#
-# Keyless local provider via the `llm-endpoint` tunnel (e.g. host Ollama):
-#   HINDSIGHT_API_LLM_PROVIDER=ollama
-#   HINDSIGHT_API_LLM_BASE_URL=http://127.0.0.1:11434/v1
-#   HINDSIGHT_API_LLM_MODEL=llama3.1
 EOF
 fi
 
