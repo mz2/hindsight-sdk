@@ -1,11 +1,12 @@
 # Hindsight SDK for Workshop
 
-This SDK runs [Hindsight](https://github.com/vectorize-io/hindsight) — an
-agent-memory system that retains, recalls, and reflects on world facts,
-experiences, and mental models — inside a workshop. It serves the Hindsight REST
-API and web UI and installs the Python and Node client libraries for building
-against them. Your memory data and LLM provider configuration are persisted on
-the host, so they survive workshop updates.
+This SDK runs [Hindsight](https://github.com/vectorize-io/hindsight) inside a
+[Workshop](https://ubuntu.com/workshop). Hindsight is an agent-memory system
+that retains, recalls, and reflects on world facts, experiences, and mental
+models. The SDK serves the Hindsight REST API and web UI and installs the
+Python and Node client libraries for building against them. Your memory data
+and LLM provider configuration are persisted on the host, so they survive
+workshop updates.
 
 ---
 
@@ -53,7 +54,7 @@ exposes, so the API (`http://localhost:8888`) and web UI
 ### Configure an LLM provider
 
 Hindsight needs an LLM to reflect on memories. There is no Workshop "secret"
-interface, so credentials are supplied the workshop-native way — configured
+interface, so credentials are supplied the workshop-native way: configured
 **once** into a file on the persisted `hindsight-data` mount:
 
 ```bash
