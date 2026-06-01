@@ -1,4 +1,0 @@
-name: test-hindsight
-base: ${BASE}
-sdks:
-  - name: try-hindsight
