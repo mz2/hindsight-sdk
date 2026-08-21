@@ -6,7 +6,7 @@ Thanks for your interest in improving this Workshop SDK.
 
 - `sdkcraft.yaml` — SDK metadata, platforms, parts, plugs, and slots.
 - `hooks/` — lifecycle scripts (`setup-base`, `setup-project`, `check-health`).
-- `services/` — systemd user units for the API and web UI.
+- `services/` — systemd user units for the API and Control Plane.
 - `VERSION` — the upstream Hindsight release this branch tracks (version
   branches only; `main` carries no `VERSION`).
 - `renovate.json` + `.github/workflows/` — automated version bumps and CI.
