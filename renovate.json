@@ -7,7 +7,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/^VERSION$/"],
       "matchStrings": ["(?<currentValue>[0-9.]+)"],
-      "depNameTemplate": "hindsight-all",
+      "depNameTemplate": "hindsight-api",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "semver"
     }
@@ -15,7 +15,7 @@
   "baseBranchPatterns": ["latest"],
   "packageRules": [
     {
-      "matchPackageNames": ["hindsight-all"],
+      "matchPackageNames": ["hindsight-api"],
       "matchBaseBranches": ["latest"]
     }
   ]

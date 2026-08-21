@@ -1,22 +1,10 @@
-#!/usr/bin/bash
-# Runs as root on every launch and refresh. System-wide setup: toolchains and PATH.
-set -euo pipefail
-
 apt-get update
-eatmydata apt-get install python3-venv python3-pip curl ca-certificates gnupg
+eatmydata apt-get install curl ca-certificates
 
-# Node.js 20 LTS. The Hindsight web UI (control plane) is a Next.js 16 app that
-# requires Node >= 20; Ubuntu 24.04 ships Node 18. NodeSource publishes the LTS
-# for both amd64 and arm64, and bundles a matching npm.
-if ! command -v node >/dev/null 2>&1 \
-    || [ "$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)" -lt 20 ]; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    eatmydata apt-get install nodejs
-fi
-
-# Put the Hindsight venv (via the version-stable "current" symlink) and the
-# user-local bin directory on PATH for every login shell. $HOME and $PATH are
-# resolved at login time, not now.
-cat <<EOF >/etc/profile.d/hindsight.sh
-export PATH="\$HOME/.local/share/hindsight/current/bin:\$HOME/.local/bin:\$PATH"
-EOF
+# Expose stable SDK entrypoints without putting the whole Python venv on PATH.
+install -d /usr/local/bin
+ln -sf "$SDK/bin/hindsight-api" /usr/local/bin/hindsight-api
+ln -sf "$SDK/bin/hindsight-worker" /usr/local/bin/hindsight-worker
+ln -sf "$SDK/bin/hindsight-admin" /usr/local/bin/hindsight-admin
+ln -sf "$SDK/bin/hindsight-local-mcp" /usr/local/bin/hindsight-local-mcp
+ln -sf "$SDK/bin/hindsight-control-plane" /usr/local/bin/hindsight-control-plane
