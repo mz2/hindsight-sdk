@@ -1,31 +1,27 @@
 name: hindsight
-adopt-info: version
-summary: Hindsight agent-memory server, web UI, and client SDKs for Workshop
+adopt-info: hindsight-api
+summary: Hindsight agent-memory server and control plane for Workshop
 description: |
   This SDK runs Hindsight — an agent-memory system that retains, recalls, and
   reflects on world facts, experiences, and mental models — inside a workshop.
-  It serves the Hindsight REST API and the web UI, and installs the Python and
-  Node client libraries for building against them. Memory data and the LLM
-  provider configuration are persisted on the host so they survive workshop
-  updates. The server reaches its LLM either through a cloud provider key
-  configured once in ~/.hindsight/server.env, or keylessly through a local
-  endpoint (Ollama/LM Studio) reached over the llm-endpoint tunnel.
+  It ships the Hindsight API server and Hindsight Control Plane built from
+  upstream source. Memory data and the LLM provider configuration are persisted
+  on the host so they survive workshop updates. The server reaches its LLM
+  either through a cloud provider key configured once in
+  ~/.hindsight/server.env, or keylessly through a local endpoint
+  (Ollama/LM Studio) reached over the llm-endpoint tunnel.
 license: Apache-2.0
 
 platforms:
   ubuntu@24.04:amd64:
   ubuntu@24.04:arm64:
+  ubuntu@26.04:amd64:
+  ubuntu@26.04:arm64:
 
 plugs:
   hindsight-data:
     interface: mount
     workshop-target: /home/workshop/.hindsight
-  pip-cache:
-    interface: mount
-    workshop-target: /home/workshop/.cache/pip
-  npm-cache:
-    interface: mount
-    workshop-target: /home/workshop/.npm
   llm-endpoint:
     interface: tunnel
     endpoint: localhost:11434
@@ -34,18 +30,85 @@ slots:
   hindsight-api:
     interface: tunnel
     endpoint: localhost:8888
-  hindsight-webui:
+  hindsight-control-plane:
     interface: tunnel
     endpoint: localhost:9999
 
 parts:
-  version:
-    plugin: nil
+  hindsight-api:
+    plugin: uv
+    source: .
+    build-snaps:
+      - astral-uv
+    build-environment:
+      - UV_NO_EDITABLE: "1"
+      - UV_PYTHON_DOWNLOADS: "manual"
+      - UV_PYTHON_PREFERENCE: "managed"
+    build-packages:
+      - curl
+      - ca-certificates
+      - git
+      - gcc
+      - g++
+      - make
+      - pkg-config
+      - libffi-dev
     override-pull: |
       VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
       craftctl set version="$VERSION"
+      curl -fsSL -o hindsight.tar.gz \
+        "https://github.com/vectorize-io/hindsight/archive/refs/tags/v${VERSION}.tar.gz"
+      tar -xzf hindsight.tar.gz --strip-components=1 -C "$CRAFT_PART_SRC"
+      rm hindsight.tar.gz
     override-build: |
+      # Build only the server package. This intentionally avoids
+      # hindsight-all, which is the embedded Python library bundle.
+      export UV_PYTHON_INSTALL_DIR="$CRAFT_PART_INSTALL/python-runtime"
+      uv python install 3.12
+      PYTHON=$(uv python find 3.12)
+      uv venv --allow-existing --relocatable --python "$PYTHON" "$CRAFT_PART_INSTALL"
+      PYTHON_REL=$(realpath --relative-to="$CRAFT_PART_INSTALL/bin" "$PYTHON")
+      ln -snf "$PYTHON_REL" "$CRAFT_PART_INSTALL/bin/python"
+      ln -snf python "$CRAFT_PART_INSTALL/bin/python3"
+      ln -snf python "$CRAFT_PART_INSTALL/bin/python3.12"
+      VIRTUAL_ENV="$CRAFT_PART_INSTALL" \
+        uv sync --frozen --no-dev --no-editable --package hindsight-api
       install -D -m644 "$CRAFT_PROJECT_DIR/VERSION" "$CRAFT_PART_INSTALL/VERSION"
+
+  hindsight-control-plane:
+    plugin: nil
+    source: .
+    build-snaps:
+      - node/22/stable
+    build-packages:
+      - curl
+      - ca-certificates
+      - git
+    override-pull: |
+      VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
+      curl -fsSL -o hindsight.tar.gz \
+        "https://github.com/vectorize-io/hindsight/archive/refs/tags/v${VERSION}.tar.gz"
+      tar -xzf hindsight.tar.gz --strip-components=1 -C "$CRAFT_PART_SRC"
+      rm hindsight.tar.gz
+    override-build: |
+      npm ci --ignore-scripts \
+        --workspace @vectorize-io/hindsight-client \
+        --workspace @vectorize-io/hindsight-control-plane
+      npm run build -w @vectorize-io/hindsight-client
+      npm run build -w @vectorize-io/hindsight-control-plane
+
+      install -d "$CRAFT_PART_INSTALL/control-plane" "$CRAFT_PART_INSTALL/bin"
+      cp -a hindsight-control-plane/bin "$CRAFT_PART_INSTALL/control-plane/"
+      cp -a hindsight-control-plane/standalone "$CRAFT_PART_INSTALL/control-plane/"
+      cp -a hindsight-control-plane/public "$CRAFT_PART_INSTALL/control-plane/"
+      cat > "$CRAFT_PART_INSTALL/bin/hindsight-control-plane" <<'EOF'
+      #!/usr/bin/env bash
+      set -euo pipefail
+      SDK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+      exec node "$SDK_ROOT/control-plane/bin/cli.js" "$@"
+      EOF
+      chmod 0755 "$CRAFT_PART_INSTALL/bin/hindsight-control-plane"
+
   services:
     plugin: dump
     source: services
