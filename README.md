@@ -19,7 +19,7 @@ name: hindsight-demo
 base: ubuntu@24.04
 sdks:
   - name: node
-    channel: latest/stable
+    channel: 24/stable
   - name: hindsight
     channel: latest/stable
   - name: system
@@ -27,7 +27,7 @@ sdks:
       hindsight-api:
         interface: tunnel
         endpoint: localhost:8888
-      hindsight-control-plane:
+      hindsight-control-plane: # requires node SDK
         interface: tunnel
         endpoint: localhost:9999
 ```
@@ -96,7 +96,7 @@ reused across every `workshop refresh`.
 
 ### Use the memory store
 
-From the host, once the workshop is up:
+From the host, once the workshop is up and its tunnels are connected:
 
 ```bash
 curl http://localhost:8888/        # REST API
