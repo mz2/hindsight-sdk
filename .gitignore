@@ -6,3 +6,4 @@ parts/
 stage/
 prime/
 /workshop.yaml
+.spread-reuse.yaml

@@ -1,11 +1,26 @@
-summary: check-health flags a missing HINDSIGHT_API_LLM_MODEL (launch-free)
+summary: Launch workshop and validate hindsight API and control plane
 
-# A full `workshop launch` cannot assert this in CI: hooks/check-health only
-# reaches `okay` once HINDSIGHT_API_LLM_MODEL is set AND the API answers on
-# :8888, neither of which happens in a CI sandbox — so launch rolls back
-# regardless of whether health is error or waiting. We therefore test the
-# decision logic directly: the HINDSIGHT_API_LLM_MODEL extraction that governs
-# the health verdict, kept identical to the sed in hooks/check-health.
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
 
 execute: |
-    bash ../../test-model-check.sh
+  echo "[1/3] hindsight-api command is available"
+  workshop exec -- command -v hindsight-api
+
+  echo "[2/3] hindsight-api service is active"
+  workshop exec -- systemctl --user status hindsight-api.service --no-pager | MATCH 'Active: active \(running\)'
+
+  echo "[3/3] hindsight-control-plane service is active"
+  workshop exec -- systemctl --user status hindsight-control-plane.service --no-pager | MATCH 'Active: active \(running\)'
+
+  echo "ALL PASS"
+
+debug: |
+  workshop tasks
+  workshop exec -- command -v hindsight-api || true
+  workshop exec -- systemctl --user status hindsight-api.service --no-pager --lines=40 || true
+  workshop exec -- systemctl --user status hindsight-control-plane.service --no-pager --lines=40 || true
