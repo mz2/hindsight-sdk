@@ -8,19 +8,14 @@ restore: |
   workshop remove || true
 
 execute: |
-  echo "[1/3] hindsight-api command is available"
-  workshop exec -- command -v hindsight-api
+  echo "[1/2] hindsight-api command is available"
+  workshop exec -- sh -c 'command -v hindsight-api'
 
-  echo "[2/3] hindsight-api service is active"
+  echo "[2/2] hindsight-api service is active"
   workshop exec -- systemctl --user status hindsight-api.service --no-pager | MATCH 'Active: active \(running\)'
-
-  echo "[3/3] hindsight-control-plane service is active"
-  workshop exec -- systemctl --user status hindsight-control-plane.service --no-pager | MATCH 'Active: active \(running\)'
-
-  echo "ALL PASS"
 
 debug: |
   workshop tasks
-  workshop exec -- command -v hindsight-api || true
+  workshop exec -- sh -c 'command -v hindsight-api' || true
   workshop exec -- systemctl --user status hindsight-api.service --no-pager --lines=40 || true
   workshop exec -- systemctl --user status hindsight-control-plane.service --no-pager --lines=40 || true

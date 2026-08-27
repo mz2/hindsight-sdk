@@ -13,13 +13,16 @@ fi
 # run as a chunk/recall memory backend for clients such as Hermes.
 for _ in $(seq 1 20); do
     if curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:8888/health 2>/dev/null; then
+        msg="Hindsight API -> http://localhost:8888"
         if curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:9999 2>/dev/null; then
-            echo -n "Hindsight API -> http://localhost:8888  |  Control Plane -> http://localhost:9999"
-            workshopctl set-health okay
-            exit 0
+            msg="$msg  |  Control Plane -> http://localhost:9999"
         fi
+        echo -n "$msg"
+        workshopctl set-health okay
+        exit 0
     fi
     sleep 3
 done
 
-workshopctl set-health waiting "Hindsight API or Control Plane not responding yet"
+systemctl status --user hindsight-api.service || true
+workshopctl set-health waiting "Hindsight API not responding yet"

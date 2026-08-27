@@ -27,5 +27,3 @@ workshop launch                   # using examples/workshop.yaml (try-hindsight)
 workshop shell                    # verify behaviour
 sdkcraft test                     # run the spread test suites
 ```
-
-Keep hook scripts idempotent — they run on every `launch` and `refresh`.
