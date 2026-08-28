@@ -22,6 +22,9 @@ plugs:
   hindsight-data:
     interface: mount
     workshop-target: /home/workshop/.hindsight
+  hindsight-pg-embedded:
+    interface: mount
+    workshop-target: /home/workshop/.pg0
   llm-endpoint:
     interface: tunnel
     endpoint: localhost:11434
