@@ -11,7 +11,7 @@ fi
 # The API serves /health on :8888 once embedded Postgres is ready. With
 # HINDSIGHT_API_LLM_PROVIDER=none this does not require a model; Hindsight can
 # run as a chunk/recall memory backend for clients such as Hermes.
-for _ in $(seq 1 20); do
+for _ in $(seq 1 12); do
     if curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:8888/health 2>/dev/null; then
         msg="Hindsight API -> http://localhost:8888"
         if curl -fsS -o /dev/null --max-time 3 http://127.0.0.1:9999 2>/dev/null; then
@@ -21,8 +21,8 @@ for _ in $(seq 1 20); do
         workshopctl set-health okay
         exit 0
     fi
-    sleep 3
+    sleep 2
 done
 
-systemctl status --user hindsight-api.service || true
+sudo -u workshop --login journalctl --user -u hindsight-api.service --no-pager --lines=40 || true
 workshopctl set-health waiting "Hindsight API not responding yet"
